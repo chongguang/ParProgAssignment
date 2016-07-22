@@ -33,9 +33,11 @@ object ParallelCountChangeRunner {
       println(s"parallel count time: $fjtime ms")
       println(s"speedup: ${seqtime / fjtime}")
     }
-
+    println("Here comes the moneyThreshold//////////////////////")
     measureParallelCountChange(ParallelCountChange.moneyThreshold(amount))
+    println("Here comes the totalCoinsThreshold//////////////////////")
     measureParallelCountChange(ParallelCountChange.totalCoinsThreshold(coins.length))
+    println("Here comes the combinedThreshold//////////////////////")
     measureParallelCountChange(ParallelCountChange.combinedThreshold(amount, coins))
   }
 }
@@ -62,20 +64,34 @@ object ParallelCountChange {
    *  specified list of coins for the specified amount of money.
    */
   def parCountChange(money: Int, coins: List[Int], threshold: Threshold): Int = {
-    ???
+    if (threshold(money, coins)) {
+      countChange(money, coins)
+    } else {
+      money match {
+        case 0 => 1
+        case money if money < 0 => 0
+        case _ => coins match {
+          case Nil => 0
+          case x::xs => if(x>money) 0 else {
+            val (x1, x2) = parallel(countChange(money - x, coins), countChange(money, coins.tail))
+            x1 + x2
+          }
+        }
+      }
+    }
   }
 
   /** Threshold heuristic based on the starting money. */
   def moneyThreshold(startingMoney: Int): Threshold =
-    ???
+    (money: Int, coins: List[Int]) => money <= startingMoney * 2 / 3
 
   /** Threshold heuristic based on the total number of initial coins. */
   def totalCoinsThreshold(totalCoins: Int): Threshold =
-    ???
+    (money: Int, coins: List[Int]) => coins.length <= totalCoins * 2 / 3
 
 
   /** Threshold heuristic based on the starting money and the initial list of coins. */
-  def combinedThreshold(startingMoney: Int, allCoins: List[Int]): Threshold = {
-    ???
-  }
+  def combinedThreshold(startingMoney: Int, allCoins: List[Int]): Threshold =
+    (money: Int, coins: List[Int]) => money * coins.length <= startingMoney * allCoins.length / 2
+
 }
