@@ -73,7 +73,9 @@ object ParallelCountChange {
         case _ => coins match {
           case Nil => 0
           case x::xs => if(x>money) 0 else {
-            val (x1, x2) = parallel(countChange(money - x, coins), countChange(money, coins.tail))
+            val (x1, x2) = parallel(
+              parCountChange(money - x, coins, threshold),
+              parCountChange(money, coins.tail, threshold))
             x1 + x2
           }
         }
