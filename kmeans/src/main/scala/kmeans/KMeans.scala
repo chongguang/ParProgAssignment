@@ -69,7 +69,10 @@ class KMeans {
   }
 
   def converged(eta: Double)(oldMeans: GenSeq[Point], newMeans: GenSeq[Point]): Boolean = {
-    ???
+    val pairs = oldMeans.zip(newMeans)
+    eta > pairs.foldLeft(0.0){
+      case (sum, (oldMean, newMean)) => sum + oldMean.squareDistance(newMean)
+    }
   }
 
   @tailrec
