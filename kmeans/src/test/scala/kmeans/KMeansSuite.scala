@@ -71,6 +71,7 @@ class KMeansSuite extends FunSuite {
     checkParClassify(points, means, expected)
   }
 
+
 }
 
 
