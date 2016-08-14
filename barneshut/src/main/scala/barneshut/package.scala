@@ -46,7 +46,7 @@ package object barneshut {
   case class Empty(centerX: Float, centerY: Float, size: Float) extends Quad {
     def massX: Float = centerX
     def massY: Float = centerY
-    def mass: Float = 0
+    def mass: Float = 0f
     def total: Int = 0
     def insert(b: Body): Quad = Leaf(centerX, centerY, size, Seq(b))
   }
@@ -54,16 +54,16 @@ package object barneshut {
   case class Fork(
     nw: Quad, ne: Quad, sw: Quad, se: Quad
   ) extends Quad {
-    val centerX: Float = nw.centerX + nw.size / 2
-    val centerY: Float = nw.centerY + nw.size / 2
-    val size: Float = nw.size * 2
+    val centerX: Float = nw.centerX + nw.size / 2.0f
+    val centerY: Float = nw.centerY + nw.size / 2.0f
+    val size: Float = nw.size * 2.0f
     val mass: Float = nw.mass + ne.mass + sw.mass + se.mass
     val massX: Float = (nw.massX * nw.mass + ne.massX * ne.mass + sw.massX * sw.mass + se.massX * se.mass) / mass
     val massY: Float = (nw.massY * nw.mass + ne.massY * ne.mass + sw.massY * sw.mass + se.massY * se.mass) / mass
     val total: Int = nw.total + ne.total + sw.total + se.total
 
     def isBodyInQuad(b: Body, q: Quad): Boolean = {
-      val halfSize = q.size / 2
+      val halfSize = q.size / 2.0f
       b.x >= q.centerX - halfSize && b.x <= q.centerX + halfSize && b.y >= q.centerY - halfSize && b.y <= q.centerY + halfSize
     }
 
@@ -85,11 +85,11 @@ package object barneshut {
   case class Leaf(centerX: Float, centerY: Float, size: Float, bodies: Seq[Body])
   extends Quad {
 
-    val mass = bodies.foldLeft(0f)(_ + _.mass)
+    val mass = bodies.foldLeft(0.0f)(_ + _.mass)
     val massX = bodies.map(b => b.mass * b.x).sum / mass
     val massY = bodies.map(b => b.mass * b.y).sum / mass
     val total: Int = bodies.length
-    
+
     private val qSize = size / 4.0f
     def insert(b: Body): Quad = {
       if(size > minimumSize) {
@@ -149,11 +149,18 @@ package object barneshut {
       }
 
       def traverse(quad: Quad): Unit = (quad: Quad) match {
-        case Empty(_, _, _) =>
+        case Empty(_, _, _) => ()
           // no force
-        case Leaf(_, _, _, bodies) =>
+        case Leaf(_, _, _, bodies) => bodies.map(body => addForce(body.mass, body.x, body.y))
           // add force contribution of each body by calling addForce
-        case Fork(nw, ne, sw, se) =>
+        case Fork(nw, ne, sw, se) => if(quad.size / distance(quad.massX, quad.massY, x, y) < theta) {
+          addForce(quad.mass, quad.massX, quad.massY)
+        } else {
+          traverse(nw)
+          traverse(ne)
+          traverse(sw)
+          traverse(se)
+        }
           // see if node is far enough from the body,
           // or recursion is needed
       }
